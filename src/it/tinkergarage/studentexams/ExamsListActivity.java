@@ -6,32 +6,39 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.Toast;
 
 public class ExamsListActivity extends Activity {
-	private TextView resultText = null;
 	private ProgressBar progressBar = null;
 	private Button fetchButton = null;
+	private ListView resultList = null;
+	private ArrayAdapter<String> adapter = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_exams_list);
 		
-		resultText = (TextView) findViewById(R.id.responseText);
 		progressBar = (ProgressBar) findViewById(R.id.fetchProgress);
 		fetchButton = (Button) findViewById(R.id.fetchExamButton);
+		resultList = (ListView) findViewById(R.id.examsListView);
+		
+		// Exam ListView
+		adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, new ArrayList<String>());
+		resultList.setAdapter(adapter);
 	}
 
 	@Override
@@ -57,7 +64,7 @@ public class ExamsListActivity extends Activity {
 		protected String doInBackground(Void... params) {
 			String response = "";
 			try {
-				URL url = new URL("http://192.168.2.148:8000/api/exam/?format=json");
+				URL url = new URL("http://172.16.21.27:8000/api/exam/?format=json");
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				response = readStream(connection.getInputStream());
 			} catch (Exception e) {
@@ -68,22 +75,20 @@ public class ExamsListActivity extends Activity {
 		
 		@Override
 		protected void onPostExecute(String response) {
-			String result = "";
-			
-			progressBar.setVisibility(View.INVISIBLE);
+			progressBar.setVisibility(View.GONE);
 			fetchButton.setEnabled(true);
 			
-			// Parse JSONObject as simple text
+			// Parse JSONObject as simple text and put values inside adapter
 			try {
 				JSONArray jsonResult = new JSONArray(response);
+				adapter.clear();
 				for (int i = 0; i < jsonResult.length(); i++) {
-					result += "" + jsonResult.getJSONObject(i).getString("course") + "\n";
+					adapter.add(jsonResult.getJSONObject(i).getString("course"));
 				}
 			} catch (Exception e) {
-				result = e.getMessage();
+				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
 			}
 			
-			resultText.setText(result);
 			super.onPostExecute(response);
 		}
 	}
