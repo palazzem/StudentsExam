@@ -7,14 +7,19 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 public class ExamsListActivity extends Activity {
 	private TextView resultText = null;
+	private ProgressBar progressBar = null;
+	private Button fetchButton = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +27,8 @@ public class ExamsListActivity extends Activity {
 		setContentView(R.layout.activity_exams_list);
 		
 		resultText = (TextView) findViewById(R.id.responseText);
+		progressBar = (ProgressBar) findViewById(R.id.fetchProgress);
+		fetchButton = (Button) findViewById(R.id.fetchExamButton);
 	}
 
 	@Override
@@ -32,12 +39,36 @@ public class ExamsListActivity extends Activity {
 	}
 
 	public void fetchExams(View v) {
-		try {
-			URL url = new URL("http://172.16.21.27:8000/api/student/2/?format=json");
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			resultText.setText(readStream(connection.getInputStream()));
-		} catch (Exception e) {
-			resultText.setText(e.getMessage());
+		new FetchExamsTask().execute();
+	}
+	
+	private class FetchExamsTask extends AsyncTask<Void, Void, String> {
+		@Override
+		protected void onPreExecute() {
+			progressBar.setVisibility(View.VISIBLE);
+			fetchButton.setEnabled(false);
+			super.onPreExecute();
+		}
+
+		@Override
+		protected String doInBackground(Void... params) {
+			String response = "";
+			try {
+				URL url = new URL("http://192.168.2.148:8000/api/student/2/?format=json");
+				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+				response = readStream(connection.getInputStream());
+			} catch (Exception e) {
+				response = e.getMessage();
+			}
+			return response;
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			progressBar.setVisibility(View.INVISIBLE);
+			fetchButton.setEnabled(true);
+			resultText.setText(result);
+			super.onPostExecute(result);
 		}
 	}
 
