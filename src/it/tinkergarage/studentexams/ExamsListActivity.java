@@ -7,6 +7,9 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -54,7 +57,7 @@ public class ExamsListActivity extends Activity {
 		protected String doInBackground(Void... params) {
 			String response = "";
 			try {
-				URL url = new URL("http://192.168.2.148:8000/api/student/2/?format=json");
+				URL url = new URL("http://192.168.2.148:8000/api/exam/?format=json");
 				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 				response = readStream(connection.getInputStream());
 			} catch (Exception e) {
@@ -64,11 +67,24 @@ public class ExamsListActivity extends Activity {
 		}
 		
 		@Override
-		protected void onPostExecute(String result) {
+		protected void onPostExecute(String response) {
+			String result = "";
+			
 			progressBar.setVisibility(View.INVISIBLE);
 			fetchButton.setEnabled(true);
+			
+			// Parse JSONObject as simple text
+			try {
+				JSONArray jsonResult = new JSONArray(response);
+				for (int i = 0; i < jsonResult.length(); i++) {
+					result += "" + jsonResult.getJSONObject(i).getString("course") + "\n";
+				}
+			} catch (Exception e) {
+				result = e.getMessage();
+			}
+			
 			resultText.setText(result);
-			super.onPostExecute(result);
+			super.onPostExecute(response);
 		}
 	}
 
