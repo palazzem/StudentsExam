@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -40,7 +41,13 @@ public class ExamsListActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
 				Exam exam = (Exam) adapter.getItemAtPosition(position);
-				Toast.makeText(getApplicationContext(), exam.getRegistrationDate(), Toast.LENGTH_SHORT).show();
+				Intent intent = new Intent(ExamsListActivity.this, ExamDetailActivity.class);
+				intent.putExtra("name", exam.getCourseName());
+				intent.putExtra("date", exam.getRegistrationDate());
+				intent.putExtra("vote", exam.getVote());
+				intent.putExtra("honor", exam.getHonors());
+				intent.putExtra("note", exam.getNote());
+				startActivity(intent);
 			}
 		});
 	}
