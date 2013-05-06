@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.app.Activity;
 import android.view.Menu;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -34,6 +35,14 @@ public class ExamsListActivity extends Activity {
 		// Exam ListView
 		adapter = new ArrayAdapter<Exam>(getApplicationContext(), android.R.layout.simple_list_item_1, new ArrayList<Exam>());
 		resultList.setAdapter(adapter);
+		resultList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+			@Override
+			public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
+				Exam exam = (Exam) adapter.getItemAtPosition(position);
+				Toast.makeText(getApplicationContext(), exam.getRegistrationDate(), Toast.LENGTH_SHORT).show();
+			}
+		});
 	}
 
 	@Override
