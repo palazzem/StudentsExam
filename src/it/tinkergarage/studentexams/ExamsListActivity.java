@@ -1,15 +1,10 @@
 package it.tinkergarage.studentexams;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import it.tinkergarage.studentexams.rest.ExamAPI;
+import it.tinkergarage.studentexams.rest.resource.Exam;
+
 import java.util.ArrayList;
-
 import org.json.JSONArray;
-
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
@@ -25,7 +20,7 @@ public class ExamsListActivity extends Activity {
 	private ProgressBar progressBar = null;
 	private Button fetchButton = null;
 	private ListView resultList = null;
-	private ArrayAdapter<String> adapter = null;
+	private ArrayAdapter<Exam> adapter = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +32,7 @@ public class ExamsListActivity extends Activity {
 		resultList = (ListView) findViewById(R.id.examsListView);
 		
 		// Exam ListView
-		adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, new ArrayList<String>());
+		adapter = new ArrayAdapter<Exam>(getApplicationContext(), android.R.layout.simple_list_item_1, new ArrayList<Exam>());
 		resultList.setAdapter(adapter);
 	}
 
@@ -52,7 +47,7 @@ public class ExamsListActivity extends Activity {
 		new FetchExamsTask().execute();
 	}
 	
-	private class FetchExamsTask extends AsyncTask<Void, Void, String> {
+	private class FetchExamsTask extends AsyncTask<Void, Void, ArrayList<Exam>> {
 		@Override
 		protected void onPreExecute() {
 			progressBar.setVisibility(View.VISIBLE);
@@ -61,58 +56,33 @@ public class ExamsListActivity extends Activity {
 		}
 
 		@Override
-		protected String doInBackground(Void... params) {
-			String response = "";
-			try {
-				URL url = new URL("http://172.16.21.27:8000/api/exam/?format=json");
-				HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-				response = readStream(connection.getInputStream());
-			} catch (Exception e) {
-				response = e.getMessage();
-			}
-			return response;
-		}
-		
-		@Override
-		protected void onPostExecute(String response) {
-			progressBar.setVisibility(View.GONE);
-			fetchButton.setEnabled(true);
+		protected ArrayList<Exam> doInBackground(Void... params) {
+			ArrayList<Exam> exams = new ArrayList<Exam>();
 			
-			// Parse JSONObject as simple text and put values inside adapter
 			try {
-				JSONArray jsonResult = new JSONArray(response);
-				adapter.clear();
+				// Parse JSONObject as simple text and put values inside adapter
+				JSONArray jsonResult = new JSONArray(new ExamAPI().getExams());
 				for (int i = 0; i < jsonResult.length(); i++) {
-					adapter.add(jsonResult.getJSONObject(i).getString("course"));
+					exams.add(new Exam(jsonResult.getJSONObject(i)));
 				}
 			} catch (Exception e) {
 				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
 			}
 			
-			super.onPostExecute(response);
+			return exams;
 		}
-	}
-
-	private String readStream(InputStream in) {
-		String response = "";
-		BufferedReader reader = null;
-		try {
-			reader = new BufferedReader(new InputStreamReader(in));
-			String line = "";
-			while ((line = reader.readLine()) != null) {
-				response += line;
+		
+		@Override
+		protected void onPostExecute(ArrayList<Exam> exams) {
+			progressBar.setVisibility(View.GONE);
+			fetchButton.setEnabled(true);
+			
+			adapter.clear();
+			for (Exam exam : exams) {
+				adapter.add(exam);
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (reader != null) {
-				try {
-					reader.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			
+			super.onPostExecute(exams);
 		}
-		return response;
 	}
 }
